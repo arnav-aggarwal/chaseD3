@@ -8,7 +8,7 @@ const abs = Math.abs;
 const svg = d3.select("#container").append("svg")
   .attr("width", width)
   .attr("height", height)
-  .attr("class", "overlay");
+  // .attr("class", "overlay");
 
 const dots = [
   {x: width / 4, y: height / 4}, 
@@ -22,21 +22,26 @@ svg.append("g")
   .selectAll("circle")
   .data(dots)
   .enter().append("circle")
-  .attr("r", 5)
+  .attr("r", 10)
   .attr("cx", d => d.x)
   .attr("cy", d => d.y);
 
+const circles = d3.selectAll('circle');
 
-svg.on("mousemove", function() {
-  const circles = d3.selectAll("circle")
-    .each(function(d) {
-      console.log(d);
-    });
+//http://bl.ocks.org/adamhurst/13dd439047b66ee78c45
+svg.on('mousemove', function() {
+  const [x] = d3.mouse(this);
+  circles.transition(1000)
+    .attr('cx', x);
+});
 
-  // console.log(circles);
+function generateDots() {
+  const circles = d3.selectAll('circle');
 
-  // circles.attr('cx', function(d) { 
-  //   return d.x + 100
-  // });
+}
 
-})
+function draw() {
+  const dots = generateDots();
+}
+
+setInterval(draw, 20);
