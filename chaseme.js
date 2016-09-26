@@ -1,6 +1,6 @@
 const pageWidth = window.innerWidth;
 const pageHeight = window.innerHeight;
-const TOTAL_DOTS = 12;
+let initialDots = 16;
 const dots = [];
 
 //Global variables
@@ -12,13 +12,7 @@ let dotNum = 0;
 let numRevolving = 0;
 
 //Fill up dots array
-while(dotNum++ < TOTAL_DOTS) {
-  const margin = 200;
-  dots.push({
-    x: Math.random() * (pageWidth - margin) + margin / 2,
-    y: Math.random() * (pageHeight - margin) + margin / 2,
-  });
-}
+while(dotNum++ < initialDots) dots.push(makeDot());
 
 const svg = d3.select('#container').append('svg')
   .attr('width', pageWidth)
@@ -38,6 +32,14 @@ svg.append('g')
   .attr('cy', dot => dot.y)
   .classed('notRevolving', true);
 
+function makeDot() {
+  const padding = 100;
+  return {
+    x: Math.random() * (pageWidth - padding * 2) + padding,
+    y: Math.random() * (pageHeight - padding * 2) + padding,
+  };
+}
+
 //Took the general strategy of combining a mousemove
 //event listener with a setInterval from
 //http://bl.ocks.org/adamhurst/13dd439047b66ee78c45
@@ -47,22 +49,27 @@ svg.append('g')
  * @param  {Number} offset - this is what actually does the revolving
  */
 function revolveDots(offset = 0) {
+  const offsetIncrement = 1.5;
+  const interval = 20;
+  const radiusIncrement = 5;
+  const radius = radiusIncrement * numRevolving;
   collectDots();
+
   d3.selectAll('.revolving')
     .each(function(dot) {
-      const radius = 5 * numRevolving;
-      const degree = 2 * Math.PI * dot.number / numRevolving + offset;
+      const degree = 2 * Math.PI * dot.number / numRevolving + offset / 360;
       const circleX = Math.cos(degree) * radius;
       const circleY = Math.sin(degree) * radius;
       d3.select(this)
         .transition()
-        .duration(25)
+        .duration(interval - 1)
         .attr('cx', mouseX + circleX)
         .attr('cy', mouseY + circleY);
     });
 
-  //the bound argument here is what does the revolving
-  setTimeout(revolveDots.bind(null, offset + 0.003 * numRevolving), 25);
+  //nextOffset is what does the revolving
+  const nextOffset = offset + offsetIncrement * numRevolving;
+  setTimeout(revolveDots.bind(null, nextOffset), interval);
 } 
 
 /**
@@ -83,6 +90,20 @@ function collectDots() {
           .classed('notRevolving', false);
       }
     });
+}
+
+function addDots() {
+  dots.push(makeDot());
+
+  svg.append('g')
+    .attr('class', 'dot')
+    .selectAll('circle')
+    .data(dots)
+    .enter().append('circle')
+    .attr('r', 10)
+    .attr('cx', dot => dot.x)
+    .attr('cy', dot => dot.y)
+    .classed('notRevolving', true);
 }
 
 revolveDots();
