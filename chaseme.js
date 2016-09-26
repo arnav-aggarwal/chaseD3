@@ -1,7 +1,6 @@
 const container = document.getElementById('container');
-const width = $(document).width();
-const height = $(document).height();
-
+const width = window.innerWidth;
+const height = window.innerHeight;
 const dots4 = [
   {x: width / 4, y: height / 4}, 
   {x: width * 3/4, y: height * 3/4},
@@ -13,7 +12,8 @@ const dots64 = [...dots16, ...dots16, ...dots16, ...dots16];
 const dots256 = [...dots64, ...dots64, ...dots64, ...dots64];
 
 //Global variables, for dirty-checking mouse position
-let mouseX, mouseY;
+let mouseX = width / 2;
+let mouseY = height / 2;
 let previousX, previousY;
 
 const svg = d3.select("#container").append("svg")
@@ -25,11 +25,14 @@ const svg = d3.select("#container").append("svg")
 svg.append("g")
   .attr("class", "dot")
   .selectAll("circle")
-  .data(dots256)
+  .data(dots16)
+  // .data(dots4)
   .enter().append("circle")
   .attr("r", 10)
   .attr("cx", d => d.x)
   .attr("cy", d => d.y);
+
+const numDots = d3.selectAll('circle')[0].length;
 
 //Took the strategy from
 //http://bl.ocks.org/adamhurst/13dd439047b66ee78c45
@@ -38,10 +41,12 @@ svg.on('mousemove', function() {
   [mouseX, mouseY] = d3.mouse(this);
 });
 
+const updateMousePosition = () => [previousX, previousY] = [mouseX, mouseY];
+
 function moveDotsToMouse() {
   if(previousX !== mouseX) {
     d3.selectAll('circle')
-      .each(function(d) {
+      .each(function() {
         const radius = 75;
         const degree = Math.random() * 360;
         const circleX = Math.cos(degree) * radius;
@@ -52,7 +57,44 @@ function moveDotsToMouse() {
       });
   }
 
-  [previousX, previousY] = [mouseX, mouseY];
+  updateMousePosition();
 }
 
-setInterval(moveDotsToMouse, 15);
+let count = 0;
+function circleDotsAroundMouse() {
+  d3.selectAll('circle')
+      .each(function(__, thisDotNum) {
+        const radius = 75;
+        const degree = 2 * Math.PI / numDots * thisDotNum + count;
+        const circleX = Math.cos(degree) * radius;
+        const circleY = Math.sin(degree) * radius;
+        d3.select(this)
+          .attr('cx', mouseX + circleX)
+          .attr('cy', mouseY + circleY);
+      });
+
+  count += 0.012;
+  updateMousePosition();
+}
+
+function moveDotsAway() {
+  if(previousX !== mouseX) {
+    d3.selectAll('circle')
+      .each(function(dot) {
+        const xDiff = dot.x - mouseX;
+        const yDiff = dot.y - mouseY;
+        if(Math.abs(xDiff) < 50 && Math.abs(yDiff) < 50) {
+          console.log(mouseX + 30);
+          d3.select(this)
+            .attr('cx', mouseX + (50 - xDiff))
+            .attr('cy', mouseY + (50 - yDiff));
+        }
+      });
+  }
+
+  updateMousePosition();
+}
+
+// setInterval(moveDotsToMouse, 15);
+setInterval(circleDotsAroundMouse, 10);
+// setInterval(moveDotsAway, 15);
